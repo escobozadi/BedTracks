@@ -89,12 +89,24 @@ def datFormat():
     dataFrame = dataFrame.replace({"DURATION": {"00:00:00": np.nan}})
     dataFrame["SOURCE"] = dataFrame["SOURCE"] + dataFrame["STATION"]
     dataFrame["SHARE-PERCENT"] = dataFrame["SHARE-PERCENT"].astype(float) / 1000
+    dataFrame = dataFrame.replace({"SOURCE": {"ISPOT": "ISPOTIFY"}})
+    dataFrame["DIST."] = dataFrame["DIST-QTR"].astype(str) + "Q" + dataFrame["DIST-YEAR"].astype(str).str[-2:]
+    dataFrame["PERF-COUNT"] = pd.to_numeric(dataFrame["PERF-COUNT"])
 
-    pd.set_option("display.max_columns", len(dataFrame))
-    print(dataFrame)
-    print(dataFrame.iloc[[25580]])
-    pd.reset_option("display.max_columns")
+    # pd.set_option("display.max_columns", len(dataFrame))
+    # print(dataFrame)
+    # pd.reset_option("display.max_columns")
+
+    # Rearrange columns
+    dataFrame = dataFrame[["DIST.", "DIST-DATE", "DIST-PERIOD-START", "DIST-PERIOD-END", "SPECIAL-DIST",
+                           "SUPPLIER-NAME", "SUPPLIER-NO", "IPI NAME NO",
+                           "SERIES-NO", "SERIES-TITLE", "AV-WORK-NO", "AV-WORK-TITLE",
+                           "SONG-TITLE", "SONG-WRITER", "SONG-CODE",
+                           "ISWC", "SHARE-PERCENT", "USAGE", "PERF-COUNT", "SOCIETY", "INCOME-TYPE",
+                           "SOURCE", "DURATION", "PERF-DATE", "PERFORMERS", "VENUE", "CITY", "PERF-TYPE",
+                           "EARNINGS-AMOUNT"]]
     dataFrame.to_csv("./B01_SOCAN_2012toJun2022_Dat.csv", encoding="utf-8", index=False)
+    return
 
 
 def cleanDataFrames():
@@ -102,13 +114,13 @@ def cleanDataFrames():
     df2 = pd.DataFrame(pd.read_csv("./B01_SOCAN_2012toJun2022.csv", index_col=False))
 
     # DataFrame #1
-    # df1 = df1.fillna("")
+    df1 = df1.fillna("")
     # df1["DIST-PERIOD-START"] = pd.to_datetime(df1["DIST-PERIOD-START"], format="%Y%m%d")
     # df1["DIST-PERIOD-END"] = pd.to_datetime(df1["DIST-PERIOD-END"], format="%Y%m%d")
     # df1["EARNINGS-AMOUNT"] = df1["EARNINGS-AMOUNT"].astype(float) / 10000
     # df1["DURATION"] = "00000000" + df1["DURATION"].astype(str).str[:-2]
     # df1["DURATION"] = df1["DURATION"].str[-6:-4] + ":" + df1["DURATION"].str[-4:-2] + ":" + df1["DURATION"].str[-2:]
-    df1 = df1.replace({"SOURCE": {"ISPOT": "ISPOTIFY"}})
+    # df1 = df1.replace({"SOURCE": {"ISPOT": "ISPOTIFY"}})
     # df1["SOURCE"] = df1["SOURCE"] + df1["STATION"]
 
     # DataFrame #2
@@ -131,33 +143,89 @@ if __name__ == '__main__':
     # sql.create_database(create_database_query)
 
     df1, df2 = cleanDataFrames()
-    # pd.set_option("display.max_columns", len(df1))
+    pd.set_option("display.max_columns", len(df1))
 
-    # df1["SOURCE"] = df1["SOURCE"].replace({"ISPOT": "ISPOTIFY"})
-    # df1.replace({"SOURCE": {"ISPOT": "ISPOTIFY"}})
-
-    # df2["Duration"] = pd.to_datetime(df2["Duration"], format="%H:%M:%S")
+    # df1["DIST."] = df1["DIST-QTR"].astype(str) + "Q" + df1["DIST-YEAR"].astype(str).str[-2:]
+    # print(df1)
 
     # print(df1.dtypes)
     # print(df2.dtypes)
 
-    # print(df1[["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION", "EARNINGS-AMOUNT"]])
-    # print(df2[["Work Number", "Use", "Station", "Source", "Duration", "Amount"]])
-    # print(df1.groupby(["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION",
-    #                    "EARNINGS-AMOUNT", "ISWC", "SHARE-PERCENT"]).size())
-    # print(df2.groupby(["Work Number", "Use", "Station", "Source", "Duration", "Amount", "ISWC"]).size())
+    # print(df1[["DIST.", "SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION",
+    #            "EARNINGS-AMOUNT", "ISWC", "SHARE-PERCENT"]])
+    # print(df2[["Dist.", "Work Number", "Use", "Station", "Source", "Duration",
+    #            "Amount", "ISWC", "Share %"]])
+    # print(df1.groupby(["DIST.", "SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION",
+    #                    "EARNINGS-AMOUNT", "SHARE-PERCENT"]).size())
+    # print(df2.groupby(["Dist.", "Work Number", "Use", "Station", "Source", "Duration",
+    #                    "Amount", "Share %"]).size())
 
-    # df1.set_index(["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION", "EARNINGS-AMOUNT"], verify_integrity=True)
+    print(df1.shape)
+    # print(df1.groupby(["DIST.", "SONG-CODE", "DURATION", "PERF-COUNT", "EARNINGS-AMOUNT", "ISWC",
+    #                    "SUPPLIER-NAME", "SUPPLIER-NO", "SONG-TITLE", "SONG-WRITER",
+    #                    "SERIES-TITLE", "AV-WORK-TITLE", "SOCIETY"]).size())
+    # print(df2.groupby(["Dist.", "Work Number", "Duration", "Amount"]).size())
+
+    print("Duplicates")
+    print(df1.duplicated().sum())
+    print(df2.duplicated().sum())
+    print("\n")
+    print("Earnings")
+    print(df1["EARNINGS-AMOUNT"].sum())
+    print(df2["Amount"].sum())
+
+    # df1.set_index(["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE",
+    # "DURATION", "EARNINGS-AMOUNT"], verify_integrity=True)
+
+    # print(df1.groupby(df1.columns.tolist(), as_index=False).size())
+    # print(df1.groupby(df1.columns.tolist(), as_index=False).size()["size"])
+    # print(df1)
+
+    # df1["DUPLICATE-COUNT"] = df1.groupby(df1.columns.tolist(), as_index=False).size()["size"]
+    # print(df1.iloc[[30003]])
+
+    # print(df1[df1.groupby(df1.columns.tolist(), as_index=False).size()["size"]])
+    # print(df1.groupby(df1.columns.tolist(), as_index=False).size()["size"] != 1.0)
+    # print(df1.loc[df1.groupby(df1.columns.tolist(), as_index=False).size()["size"] != 1.0, :])
+    df1_dup = df1[df1.duplicated(keep=False)]
+    df2_dup = df2[df2.duplicated(keep=False)]
+
+    df1 = df1.drop_duplicates()
+    df2 = df2.drop_duplicates()
+    # print("Duplicates")
+    # print(df1.duplicated().sum())
+    # print(df2.duplicated().sum())
+    #
+    # df1_dup.to_csv("./Dat_Duplicates.csv", encoding="utf-8", index=False)
+    # df2_dup.to_csv("./CSV_Duplicates.csv", encoding="utf-8", index=False)
+    # print(df1_dup)
+    # print(df2_dup)
     print("DATAFRAME #3 ------------------------------------------------------------------------------------")
     # df3 = pd.merge(df1, df2, left_on=["SONG-TITLE", "SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE"],
     #                right_on=["Work Title", "Work Number", "Use", "Station", "Source"],
     #                how='left')
 
-    # df3 = df2.join(df1.set_index(["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION", "EARNINGS-AMOUNT", "ISWC"]),
-    #                on=["Work Number", "Use", "Station", "Source", "Duration", "Amount", "ISWC"],
-    #                how='inner', lsuffix="BedTrack", rsuffix="SOCAN")
+    # Join DAT into CSV
+    df3 = df2.join(df1.set_index(["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
+                                  "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
+                                  "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"]),
+                   on=["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
+                       "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
+                       "Share %", "Use", "Source", "Station", "Duration"],
+                   how='left', lsuffix="BedTrack", rsuffix="SOCAN")
     # print(df3.dtypes)
-    # print(df3)
+    print(df3)
 
-    # pd.reset_option("display.max_columns")
+    # Join CSV into DAT
+    df4 = df1.join(df2.set_index(["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
+                                  "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
+                                  "Share %", "Use", "Source", "Station", "Duration"]),
+                   on=["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
+                       "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
+                       "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"],
+                   how='left', lsuffix="BedTrack", rsuffix="SOCAN")
+    # print(df3.dtypes)
+    print(df4)
+
+    pd.reset_option("display.max_columns")
 
