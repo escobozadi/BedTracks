@@ -64,7 +64,7 @@ def datFormat():
     # Adding Format to .dat file and saving to .csv
     datFile = pd.read_fwf("B01_SOCAN_2012toJun2022.dat", header=None, index_col=False,
                           colspecs=[(0, 4), (4, 5), (5, 50), (50, 60), (60, 90),
-                                    (90, 113), (113, 117), (117, 133), (133, 138), (138, 148),
+                                    (90, 113), (113, 117), (117, 132), (132, 138), (138, 148),
                                     (148, 156), (156, 166), (166, 216), (216, 224), (224, 274),
                                     (274, 284), (284, 293), (293, 298), (298, 299), (299, 306),
                                     (307, 317), (316, 324), (324, 332), (332, 340), (340, 341),
@@ -78,6 +78,12 @@ def datFormat():
                                  "PERF-DATE", "PERFORMERS", "ISWC", "STATION", "VENUE",
                                  "CITY", "PERF-TYPE"])
     dataFrame = pd.DataFrame(data=datFile)
+
+    pd.set_option("display.max_columns", len(dataFrame))
+    # print(dataFrame)
+    print(dataFrame.iloc[1])
+    print(dataFrame.iloc[27422])
+    pd.reset_option("display.max_columns")
 
     dataFrame = dataFrame.fillna("")
     dataFrame["DIST-PERIOD-START"] = pd.to_datetime(dataFrame["DIST-PERIOD-START"], format="%Y%m%d")
@@ -93,24 +99,31 @@ def datFormat():
     dataFrame["DIST."] = dataFrame["DIST-QTR"].astype(str) + "Q" + dataFrame["DIST-YEAR"].astype(str).str[-2:]
     dataFrame["PERF-COUNT"] = pd.to_numeric(dataFrame["PERF-COUNT"])
 
-    # pd.set_option("display.max_columns", len(dataFrame))
+    pd.set_option("display.max_columns", len(dataFrame))
     # print(dataFrame)
-    # pd.reset_option("display.max_columns")
+    # print(dataFrame.iloc[1])
+    # print(dataFrame.iloc[27422])
+
 
     # Rearrange columns
-    dataFrame = dataFrame[["DIST.", "DIST-DATE", "DIST-PERIOD-START", "DIST-PERIOD-END", "SPECIAL-DIST",
+    dataFrame = dataFrame[["DIST.", "DIST-DATE", "PERF-QTR", "DIST-PERIOD-START", "DIST-PERIOD-END", "SPECIAL-DIST",
                            "SUPPLIER-NAME", "SUPPLIER-NO", "IPI NAME NO",
                            "SERIES-NO", "SERIES-TITLE", "AV-WORK-NO", "AV-WORK-TITLE",
                            "SONG-TITLE", "SONG-WRITER", "SONG-CODE",
                            "ISWC", "SHARE-PERCENT", "USAGE", "PERF-COUNT", "SOCIETY", "INCOME-TYPE",
                            "SOURCE", "DURATION", "PERF-DATE", "PERFORMERS", "VENUE", "CITY", "PERF-TYPE",
                            "EARNINGS-AMOUNT"]]
-    dataFrame.to_csv("./B01_SOCAN_2012toJun2022_Dat.csv", encoding="utf-8", index=False)
+    dataFrame["PERF-QTR"] = dataFrame["PERF-QTR"].replace("", 0)
+    dataFrame["PERF-QTR"] = dataFrame["PERF-QTR"].astype(int)
+    dataFrame["PERF-QTR"] = dataFrame["PERF-QTR"].replace(0, "")
+    print(dataFrame.iloc[0])
+    dataFrame.to_csv("./Dat.csv", encoding="utf-8", index=False)
+    pd.reset_option("display.max_columns")
     return
 
 
-def cleanDataFrames():
-    df1 = pd.DataFrame(pd.read_csv("./B01_SOCAN_2012toJun2022_Dat.csv", index_col=False))
+def cleanDataFrames(dat="./B01_SOCAN_2012toJun2022_Dat.csv"):
+    df1 = pd.DataFrame(pd.read_csv(dat, index_col=False))
     df2 = pd.DataFrame(pd.read_csv("./B01_SOCAN_2012toJun2022.csv", index_col=False))
 
     # DataFrame #1
@@ -142,14 +155,39 @@ if __name__ == '__main__':
     # create_database_query = "CREATE DATABASE Records"
     # sql.create_database(create_database_query)
 
-    df1, df2 = cleanDataFrames()
-    pd.set_option("display.max_columns", len(df1))
+    df1, df2 = cleanDataFrames(dat="./Dat.csv")
+    df = pd.concat([df2[["Dist."]], df1[["PERF-QTR"]]], axis=1)
 
-    # df1["DIST."] = df1["DIST-QTR"].astype(str) + "Q" + df1["DIST-YEAR"].astype(str).str[-2:]
-    # print(df1)
+    df["PERF-QTR"] = df["PERF-QTR"].replace("", 0)
+    df["PERF-QTR"] = df["PERF-QTR"].astype(int)
+    df["PERF-QTR"] = df["PERF-QTR"].replace(0, "")
+
+    df = df.rename(columns={"Dist.": "CSV-Dist.", "PERF-QTR": "DAT-PERF-QTR"})
+    df = df.astype(str)
+    df["CSV-YEAR"] = df["CSV-Dist."].str[-2:]
+    df["CSV-QTR"] = df["CSV-Dist."].str[0]
+    df["DAT-YEAR"] = df["DAT-PERF-QTR"].str[-3:-1]
+    df["DAT-QTR"] = df["DAT-PERF-QTR"].str[-1]
+    pd.set_option("display.max_columns", len(df))
+    print(df)
+    print(df.loc[df["CSV-YEAR"] != df["DAT-YEAR"]])
+    df_comparison = df.loc[df["CSV-YEAR"] != df["DAT-YEAR"]]
+    print(df_comparison)
+    df_comparison.to_csv("./DIFFERENCE-PERF-QTR.csv", encoding="utf-8", index=False)
 
     # print(df1.dtypes)
     # print(df2.dtypes)
+    # df_comparison = pd.concat([df2, df1], axis=1)
+    # df_comparison["Difference"] = np.nan
+    # df_comparison.loc[df_comparison["Use"] != df_comparison["USAGE"], "Difference"] = "Use&USAGE"
+    # df_comparison.loc[df_comparison["Source"] != df_comparison["INCOME-TYPE"], "Difference"] = "Source&INCOME-TYPE"
+    # df_comparison.loc[df_comparison["Duration"] != df_comparison["DURATION"], "Difference"] = "Duration&DURATION"
+    # df = pd.concat([df_comparison[df_comparison["Use"] != df_comparison["USAGE"]],
+    #                 df_comparison[df_comparison["Source"] != df_comparison["INCOME-TYPE"]],
+    #                 df_comparison[df_comparison["Duration"] != df_comparison["DURATION"]]])
+    # print(df["Difference"])
+    # # df = df_comparison[df_comparison["Use"] != df_comparison["USAGE"]]
+    # df.to_csv("./FilesComparison.csv", encoding="utf-8", index=False)
 
     # print(df1[["DIST.", "SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE", "DURATION",
     #            "EARNINGS-AMOUNT", "ISWC", "SHARE-PERCENT"]])
@@ -160,19 +198,19 @@ if __name__ == '__main__':
     # print(df2.groupby(["Dist.", "Work Number", "Use", "Station", "Source", "Duration",
     #                    "Amount", "Share %"]).size())
 
-    print(df1.shape)
+    # print(df1.shape)
     # print(df1.groupby(["DIST.", "SONG-CODE", "DURATION", "PERF-COUNT", "EARNINGS-AMOUNT", "ISWC",
     #                    "SUPPLIER-NAME", "SUPPLIER-NO", "SONG-TITLE", "SONG-WRITER",
     #                    "SERIES-TITLE", "AV-WORK-TITLE", "SOCIETY"]).size())
     # print(df2.groupby(["Dist.", "Work Number", "Duration", "Amount"]).size())
 
-    print("Duplicates")
-    print(df1.duplicated().sum())
-    print(df2.duplicated().sum())
-    print("\n")
-    print("Earnings")
-    print(df1["EARNINGS-AMOUNT"].sum())
-    print(df2["Amount"].sum())
+    # print("Duplicates")
+    # print(df1.duplicated().sum())
+    # print(df2.duplicated().sum())
+    # print("\n")
+    # print("Earnings")
+    # print(df1["EARNINGS-AMOUNT"].sum())
+    # print(df2["Amount"].sum())
 
     # df1.set_index(["SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE",
     # "DURATION", "EARNINGS-AMOUNT"], verify_integrity=True)
@@ -187,11 +225,11 @@ if __name__ == '__main__':
     # print(df1[df1.groupby(df1.columns.tolist(), as_index=False).size()["size"]])
     # print(df1.groupby(df1.columns.tolist(), as_index=False).size()["size"] != 1.0)
     # print(df1.loc[df1.groupby(df1.columns.tolist(), as_index=False).size()["size"] != 1.0, :])
-    df1_dup = df1[df1.duplicated(keep=False)]
-    df2_dup = df2[df2.duplicated(keep=False)]
-
-    df1 = df1.drop_duplicates()
-    df2 = df2.drop_duplicates()
+    # df1_dup = df1[df1.duplicated(keep=False)]
+    # df2_dup = df2[df2.duplicated(keep=False)]
+    #
+    # df1 = df1.drop_duplicates()
+    # df2 = df2.drop_duplicates()
     # print("Duplicates")
     # print(df1.duplicated().sum())
     # print(df2.duplicated().sum())
@@ -201,31 +239,51 @@ if __name__ == '__main__':
     # print(df1_dup)
     # print(df2_dup)
     print("DATAFRAME #3 ------------------------------------------------------------------------------------")
-    # df3 = pd.merge(df1, df2, left_on=["SONG-TITLE", "SONG-CODE", "USAGE", "SOURCE", "INCOME-TYPE"],
-    #                right_on=["Work Title", "Work Number", "Use", "Station", "Source"],
-    #                how='left')
-
-    # Join DAT into CSV
-    df3 = df2.join(df1.set_index(["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
-                                  "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
-                                  "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"]),
-                   on=["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
-                       "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
-                       "Share %", "Use", "Source", "Station", "Duration"],
-                   how='left', lsuffix="BedTrack", rsuffix="SOCAN")
+    # df1 = df1[["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
+    #                                   "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
+    #                                   "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"]]
+    # df2 = df2[["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
+    #                          "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
+    #                          "Share %", "Use", "Source", "Station", "Duration"]]
+    # df1 = df1[["DIST.", "SONG-CODE", "USAGE", "INCOME-TYPE", "DURATION", "EARNINGS-AMOUNT"]]
+    # df2 = df2[["Dist.", "Work Number", "Use", "Source", "Duration", "Amount"]]
+    # # Join DAT into CSV
+    # df3 = pd.merge(df1, df2, left_on=df1.columns.tolist(),
+    #                right_on=df2.columns.tolist(),
+    #                how='left', indicator=True)
+    # df3 = df2.join(df1.set_index(["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
+    #                               "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
+    #                               "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"]),
+    #                on=["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
+    #                    "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
+    #                    "Share %", "Use", "Source", "Station", "Duration"],
+    #                how='left', lsuffix="BedTrack", rsuffix="SOCAN")
     # print(df3.dtypes)
-    print(df3)
+    # print(df3)
 
     # Join CSV into DAT
-    df4 = df1.join(df2.set_index(["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
-                                  "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
-                                  "Share %", "Use", "Source", "Station", "Duration"]),
-                   on=["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
-                       "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
-                       "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"],
-                   how='left', lsuffix="BedTrack", rsuffix="SOCAN")
+    # df4 = df1.join(df2.set_index(["Dist.", "Member Name", "Member Number", "AV Title", "Episode",
+    #                               "Work Title", "Composer(s)/Author(s)", "Work Number", "ISWC",
+    #                               "Share %", "Use", "Source", "Station", "Duration"]),
+    #                on=["DIST.", "SUPPLIER-NAME", "SUPPLIER-NO", "SERIES-TITLE", "AV-WORK-TITLE",
+    #                    "SONG-TITLE", "SONG-WRITER", "SONG-CODE", "ISWC",
+    #                    "SHARE-PERCENT", "USAGE", "INCOME-TYPE", "SOURCE", "DURATION"],
+    #                how='left', lsuffix="BedTrack", rsuffix="SOCAN")
+
+    # df4 = pd.merge(df2, df1, right_on=df1.columns.tolist(),
+    #                left_on=df2.columns.tolist(),
+    #                how='left', indicator=True)
+
     # print(df3.dtypes)
-    print(df4)
+    # print(df4)
+    # print("Merge, df1 & df2 only")
+    # print((df3["_merge"] == "left_only").sum())
+    # print((df4["_merge"] == "left_only").sum())
+    #
+    # df4_df2only = (df4[df4["_merge"] == "left_only"])[df2.columns.tolist()]
+    # df3_df1only = (df3[df3["_merge"] == "left_only"])[df1.columns.tolist()]
+    # df4_df2only.to_csv("./Data_on_CSV_and_no_DAT.csv", encoding="utf-8", index=False)
+    # df3_df1only.to_csv("./Data_on_DAT_and_no_CSV.csv", encoding="utf-8", index=False)
 
     pd.reset_option("display.max_columns")
 
