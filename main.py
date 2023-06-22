@@ -122,13 +122,47 @@ def compare(df1, df2):
 
 def cleanFile(file):
     # CLean file of music album reviews
-    print(file["Genre"])
-    print(file["Genre"].str.contains("pop", na=False, regex=True))
-    print(file["Genre"][file["Genre"].str.contains("pop", na=False, regex=True)])
-    
-    # Change Genre
-    file["Genre"][file["Genre"].str.contains("pop", na=False, regex=True)] = "pop"
+    # print(file["Genre"])
+    # print(file["Genre"].str.contains("pop", na=False, regex=True))
     # print(file["Genre"][file["Genre"].str.contains("pop", na=False, regex=True)])
+
+    print(file["Genre"].nunique())
+    # Change Genre
+    file.loc[file["Genre"].str.contains("Pop", na=False, regex=True), "Genre"] = "Pop"
+    file.loc[file["Genre"].str.contains("pop", na=False, regex=True), "Genre"] = "Pop"
+
+    file.loc[file["Genre"].str.contains("Rock", na=False, regex=True), "Genre"] = "Rock"
+    file.loc[file["Genre"].str.contains("Punk", na=False, regex=True), "Genre"] = "Punk"
+    file.loc[file["Genre"].str.contains("Hip Hop", na=False, regex=True), "Genre"] = "Hip Hop"
+    file.loc[file["Genre"].str.contains("Rap", na=False, regex=True), "Genre"] = "Rap"
+    file.loc[file["Genre"].str.contains("Jazz", na=False, regex=True), "Genre"] = "Jazz"
+    file.loc[file["Genre"].str.contains("Funk", na=False, regex=True), "Genre"] = "Funk"
+    file.loc[file["Genre"].str.contains("Folk", na=False, regex=True), "Genre"] = "Folk"
+    file.loc[file["Genre"].str.contains("Alternative", na=False, regex=True), "Genre"] = "Alternative"
+    file.loc[file["Genre"].str.contains("Metal", na=False, regex=True), "Genre"] = "Metal"
+    file.loc[file["Genre"].str.contains("Country", na=False, regex=True), "Genre"] = "Country"
+    file.loc[file["Genre"].str.contains("Ambient", na=False, regex=True), "Genre"] = "Ambient"
+    file.loc[file["Genre"].str.contains("Electro", na=False, regex=True), "Genre"] = "Electro"
+    file.loc[file["Genre"].str.contains("Techno", na=False, regex=True), "Genre"] = "Techno"
+    file.loc[file["Genre"].str.contains("Minimal", na=False, regex=True), "Genre"] = "Minimal"
+    file.loc[file["Genre"].str.contains("Psychedelic", na=False, regex=True), "Genre"] = "Psychedelic"
+    file.loc[file["Genre"].str.contains("Progressive", na=False, regex=True), "Genre"] = "Progressive"
+    file.loc[file["Genre"].str.contains("Blue", na=False, regex=True), "Genre"] = "Blues"
+
+    print(file["Genre"].nunique())
+    # print(file["Release Year"].between(1940, 1949, inclusive=True))
+    
+    file.loc[file["Release Year"].between(1940, 1949, inclusive=True), "Decade"] = "40s"
+    file.loc[file["Release Year"].between(1950, 1959, inclusive=True), "Decade"] = "50s"
+    file.loc[file["Release Year"].between(1960, 1969, inclusive=True), "Decade"] = "60s"
+    file.loc[file["Release Year"].between(1970, 1979, inclusive=True), "Decade"] = "70s"
+    file.loc[file["Release Year"].between(1980, 1989, inclusive=True), "Decade"] = "80s"
+    file.loc[file["Release Year"].between(1990, 1999, inclusive=True), "Decade"] = "90s"
+    file.loc[file["Release Year"].between(2000, 2009, inclusive=True), "Decade"] = "2000s"
+    file.loc[file["Release Year"].between(2010, 2020, inclusive=True), "Decade"] = "2010s"
+
+    # print(file["Decade"])
+    file.to_csv("~/Documents/BedTracks/archive/album_ratings2.csv", encoding="utf-8", index=False)
 
     return
 
@@ -137,7 +171,7 @@ if __name__ == '__main__':
     # datFormat()
     df1 = pd.DataFrame(pd.read_csv("~/Documents/BedTracks/archive/album_ratings.csv"))
     pd.set_option("display.max_columns", len(df1))
-    print(df1)
+    # print(df1)
     cleanFile(df1)
     pd.reset_option("display.max_columns")
 
