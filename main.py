@@ -151,7 +151,7 @@ def cleanFile(file):
 
     print(file["Genre"].nunique())
     # print(file["Release Year"].between(1940, 1949, inclusive=True))
-    
+
     file.loc[file["Release Year"].between(1940, 1949, inclusive=True), "Decade"] = "40s"
     file.loc[file["Release Year"].between(1950, 1959, inclusive=True), "Decade"] = "50s"
     file.loc[file["Release Year"].between(1960, 1969, inclusive=True), "Decade"] = "60s"
@@ -168,7 +168,7 @@ def cleanFile(file):
 
 
 if __name__ == '__main__':
-    # datFormat()
+    # datFormat()  # Convert .dat file into .csv
     df1 = pd.DataFrame(pd.read_csv("~/Documents/BedTracks/archive/album_ratings.csv"))
     pd.set_option("display.max_columns", len(df1))
     # print(df1)
